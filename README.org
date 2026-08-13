@@ -59,6 +59,13 @@ C-<return>  julia-vterm-send-region-or-current-line
 C-c C-b     julia-vterm-send-buffer
             Send the whole content of the script buffer to the Julia REPL line by line.
 
+C-c C-a     julia-vterm-activate-environment
+            Activate a Julia environment in the REPL. Without prefix, activate the nearest
+            project above default-directory. With C-u, prompt for a project directory.
+            With C-u C-u, prompt for a shared environment under ~/.julia/environments/.
+            With C-0, activate the home environment. With C--, return to the previous
+            environment. With C-1, activate a temporary environment.
+
 C-c C-i     julia-vterm-send-include-buffer-file
             Send a line to evaluate the buffer's file using include() to the Julia REPL.
             With prefix ARG, Revise.includet() is used instead.
