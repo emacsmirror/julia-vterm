@@ -373,6 +373,69 @@ script buffer."
   (save-excursion
     (julia-vterm-paste-string (julia-vterm-ensure-newline (buffer-string)))))
 
+(defun julia-vterm-julia-string (str)
+  "Return STR as a Julia string literal."
+  (concat "\"" (replace-regexp-in-string
+		"[$\\\\\"]" "\\\\\\&" str)
+	  "\""))
+
+(defun julia-vterm-project-directory ()
+  "Return the nearest ancestor of `default-directory' containing Project.toml."
+  (locate-dominating-file default-directory "Project.toml"))
+
+(defun julia-vterm-shared-environments ()
+  "Return names of shared Julia environments under ~/.julia/environments/."
+  (let ((dir (expand-file-name "~/.julia/environments/")))
+    (if (file-directory-p dir)
+	(mapcan (lambda (name)
+		  (if (and (not (member name '("." "..")))
+			   (file-directory-p (expand-file-name name dir)))
+		      (list name)))
+		(directory-files dir nil nil t))
+      nil)))
+
+(defun julia-vterm-read-shared-environment ()
+  "Prompt for a shared Julia environment name."
+  (let ((envs (julia-vterm-shared-environments)))
+    (if envs
+	(completing-read "Shared environment: " envs nil t)
+      (user-error "No shared environments found under ~/.julia/environments/"))))
+
+(defun julia-vterm-activate-environment (&optional arg)
+  "Activate a Julia environment in the paired REPL.
+Without ARG, activate the nearest project above `default-directory'.
+With \\[universal-argument], prompt for a project directory.
+With \\[universal-argument] \\[universal-argument], prompt for a shared environment.
+With numeric prefix 0, activate the home environment.
+With negative prefix, return to the previous environment.
+With numeric prefix 1, activate a temporary environment."
+  (interactive "P")
+  (if (eq (julia-vterm-fellow-repl-prompt-status) :julia)
+      (let ((cmd (cond
+		  ((null arg)
+		   (if-let ((dir (julia-vterm-project-directory)))
+		       (format "using Pkg; Pkg.activate(%s)\n"
+			       (julia-vterm-julia-string dir))
+		     (user-error "No Project.toml found above default-directory")))
+		  ((equal arg '(4))
+		   (format "using Pkg; Pkg.activate(%s)\n"
+			   (julia-vterm-julia-string
+			    (read-directory-name "Project directory: " nil nil t))))
+		  ((equal arg '(16))
+		   (format "using Pkg; Pkg.activate(%s; shared=true)\n"
+			   (julia-vterm-julia-string
+			    (julia-vterm-read-shared-environment))))
+		  ((equal arg 0)
+		   "using Pkg; Pkg.activate()\n")
+		  ((or (eq arg '-) (and (numberp arg) (< arg 0)))
+		   "using Pkg; pkg\"activate -\"\n")
+		  ((equal arg 1)
+		   "using Pkg; Pkg.activate(; temp=true)\n")
+		  (t
+		   (user-error "Unsupported prefix argument")))))
+	(julia-vterm-paste-string cmd))
+    (message "The REPL is not ready for input.")))
+
 (defun julia-vterm-send-include-buffer-file (&optional arg)
   "Send a line to evaluate the buffer's file using include() to the Julia REPL.
 With prefix ARG, use Revise.includet() instead."
@@ -414,6 +477,7 @@ With prefix ARG, use Revise.includet() instead."
   `((,(kbd "C-c C-z") . julia-vterm-switch-to-repl-buffer)
     (,(kbd "C-<return>") . julia-vterm-send-region-or-current-line)
     (,(kbd "C-c C-b") . julia-vterm-send-buffer)
+    (,(kbd "C-c C-a") . julia-vterm-activate-environment)
     (,(kbd "C-c C-i") . julia-vterm-send-include-buffer-file)
     (,(kbd "C-c C-d") . julia-vterm-send-cd-to-buffer-directory)))
 
