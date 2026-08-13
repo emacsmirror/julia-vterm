@@ -380,8 +380,12 @@ script buffer."
 	  "\""))
 
 (defun julia-vterm-project-directory ()
-  "Return the nearest ancestor of `default-directory' containing Project.toml."
-  (locate-dominating-file default-directory "Project.toml"))
+  "Return the nearest ancestor of `default-directory' containing a Julia project file."
+  (locate-dominating-file
+   default-directory
+   (lambda (dir)
+     (or (file-exists-p (expand-file-name "JuliaProject.toml" dir))
+	 (file-exists-p (expand-file-name "Project.toml" dir))))))
 
 (defun julia-vterm-shared-environments ()
   "Return names of shared Julia environments under ~/.julia/environments/."
@@ -416,7 +420,7 @@ With numeric prefix 1, activate a temporary environment."
 		   (if-let ((dir (julia-vterm-project-directory)))
 		       (format "using Pkg; Pkg.activate(%s)\n"
 			       (julia-vterm-julia-string dir))
-		     (user-error "No Project.toml found above default-directory")))
+		     (user-error "No Julia project file found above default-directory")))
 		  ((equal arg '(4))
 		   (format "using Pkg; Pkg.activate(%s)\n"
 			   (julia-vterm-julia-string
