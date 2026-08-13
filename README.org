@@ -63,8 +63,8 @@ C-c C-a     julia-vterm-activate-environment
             Activate a Julia environment in the REPL. Without prefix, activate the nearest
             project above default-directory. With C-u, prompt for a project directory.
             With C-u C-u, prompt for a shared environment under ~/.julia/environments/.
-            With C-0, activate the home environment. With C--, return to the previous
-            environment. With C-1, activate a temporary environment.
+            With C-0, activate the first project in LOAD_PATH except @. With C--, return
+            to the previous environment. With C-1, activate a temporary environment.
 
 C-c C-i     julia-vterm-send-include-buffer-file
             Send a line to evaluate the buffer's file using include() to the Julia REPL.

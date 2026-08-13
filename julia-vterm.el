@@ -410,7 +410,7 @@ script buffer."
 Without ARG, activate the nearest project above `default-directory'.
 With \\[universal-argument], prompt for a project directory.
 With \\[universal-argument] \\[universal-argument], prompt for a shared environment.
-With numeric prefix 0, activate the home environment.
+With numeric prefix 0, activate the first project in LOAD_PATH except `@'.
 With negative prefix, return to the previous environment.
 With numeric prefix 1, activate a temporary environment."
   (interactive "P")
